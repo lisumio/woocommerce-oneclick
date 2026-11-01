@@ -1,6 +1,9 @@
 
 FROM wordpress:php8.3-apache
 
+# Apache MPM compatibility
+RUN a2dismod mpm_event mpm_worker 2>/dev/null || true
+
 # WP-CLI
 COPY --from=wordpress:cli /usr/local/bin/wp /usr/local/bin/wp
 
