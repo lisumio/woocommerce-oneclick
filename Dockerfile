@@ -1,17 +1,11 @@
-FROM wordpress:latest
 
-# Install WP-CLI and MySQL client
-RUN apt-get update && apt-get install -y default-mysql-client \
-    && rm -rf /var/lib/apt/lists/* \
-    && curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
-    && chmod +x wp-cli.phar \
-    && mv wp-cli.phar /usr/local/bin/wp
+FROM wordpress:php8.3-apache
 
-# Copy the setup scripts
-COPY setup.sh /usr/local/bin/setup-wordpress.sh
-COPY entrypoint.sh /usr/local/bin/custom-entrypoint.sh
-COPY apache2-foreground-wrapper.sh /usr/local/bin/apache2-foreground-wrapper.sh
-RUN chmod +x /usr/local/bin/setup-wordpress.sh /usr/local/bin/custom-entrypoint.sh /usr/local/bin/apache2-foreground-wrapper.sh
+# WP-CLI
+COPY --from=wordpress:cli /usr/local/bin/wp /usr/local/bin/wp
 
-ENTRYPOINT ["/usr/local/bin/custom-entrypoint.sh"]
-CMD ["apache2-foreground-wrapper.sh"]
+# Redis PHP extension
+RUN pecl install redis && docker-php-ext-enable redis
+
+# PHP configuration
+COPY config/php.ini /usr/local/etc/php/conf.d/zz-custom.ini
